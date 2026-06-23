@@ -898,3 +898,165 @@
     }
   }
 }
+
+// --- Mobile Responsive Media Queries ---
+@media (max-width: 768px) {
+  .meeting-room {
+    height: 100vh;
+    overflow-y: auto;
+
+    .meeting-top-nav {
+      padding: 12px 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+      
+      .brand {
+        font-size: 1.1rem;
+      }
+      
+      .recording-status-indicator {
+        padding: 4px 10px;
+      }
+
+      .current-time {
+        font-size: 0.85rem;
+      }
+    }
+
+    .main-layout {
+      flex-direction: column;
+      overflow-y: visible;
+      flex: none;
+    }
+
+    .video-container {
+      padding: 12px;
+      height: 45vh;
+      min-height: 320px;
+      flex: none;
+
+      .live-captions {
+        bottom: 16px;
+        padding: 8px 16px;
+        font-size: 0.95rem;
+        max-width: 90%;
+      }
+    }
+
+    .video-grid-container {
+      &.layout-solo .participants-grid {
+        max-width: 100%;
+      }
+
+      &.layout-duo .participants-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr;
+      }
+
+      &.layout-quad .participants-grid {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+      }
+
+      &.layout-mesh .participants-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      &.layout-screen-share {
+        grid-template-rows: 2fr 1fr;
+        
+        .participants-grid {
+          grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+          max-height: 100px;
+        }
+      }
+      
+      .participants-grid {
+        gap: 8px;
+      }
+
+      .video-card {
+        border-radius: 12px;
+
+        .avatar-placeholder .avatar-circle {
+          width: 56px;
+          height: 56px;
+          font-size: 1.5rem;
+        }
+
+        .video-info-overlay {
+          bottom: 6px;
+          left: 6px;
+          right: 6px;
+          padding: 4px 10px;
+          border-radius: 8px;
+
+          .participant-name {
+            font-size: 0.75rem;
+          }
+
+          .status-badges .badge {
+            width: 22px;
+            height: 22px;
+            font-size: 0.65rem;
+          }
+        }
+      }
+    }
+
+    .sidebar {
+      width: 100% !important;
+      height: auto;
+      min-height: 400px;
+      border-left: none;
+      border-top: 1px solid #e2e8f0;
+      flex: none;
+
+      .sidebar-header {
+        padding: 16px 20px;
+      }
+
+      .sidebar-scroll {
+        padding: 16px 20px;
+      }
+
+      .chat-container {
+        height: 350px;
+        
+        .messages {
+          padding: 12px;
+        }
+        
+        .chat-input {
+          padding: 12px;
+        }
+      }
+    }
+
+    .control-bar {
+      padding: 16px;
+      gap: 16px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+
+      .controls {
+        gap: 8px;
+        
+        .btn-circle {
+          width: 44px;
+          height: 44px;
+          font-size: 1.1rem;
+        }
+      }
+
+      .actions {
+        gap: 6px;
+        
+        .btn-ghost {
+          padding: 8px 12px;
+          font-size: 0.8rem;
+        }
+      }
+    }
+  }
+}
