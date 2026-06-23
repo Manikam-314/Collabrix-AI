@@ -1,0 +1,16 @@
+node_modules/
+dist/
+target/
+venv/
+__pycache__/
+*.pyc
+.env
+.idea/
+.vscode/
+out/
+bin/
+*.class
+*.jar
+*.war
+qdrant_storage/
+mongo_data/

@@ -1,0 +1,103 @@
+$bg: #ffffff;
+$panel: #f5f5f5;
+$text: #232333;
+$muted: #747487;
+$line: #e2e2e2;
+$accent: #2d8cff; // Zoom Blue
+$accent-2: #0066da;
+$radius: 8px;
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 60px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #ffffff;
+  color: $text;
+  border-bottom: 1px solid $line;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: $accent;
+    font-weight: 700;
+    font-size: 1.4rem;
+
+    .brand-mark {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: $accent;
+      position: relative;
+      
+      &::after {
+        content: "";
+        position: absolute;
+        top: 8px; left: 8px;
+        width: 16px; height: 16px;
+        background: white;
+        mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/></svg>');
+        mask-size: contain;
+        mask-repeat: no-repeat;
+      }
+    }
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    a {
+      color: $text;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+
+      &:hover {
+        color: $accent;
+      }
+    }
+  }
+
+  .nav-cta {
+    display: flex;
+    gap: 16px;
+
+    .btn {
+      padding: 8px 20px;
+      border-radius: $radius;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+
+      &.outline {
+        border: 1px solid $accent;
+        color: $accent;
+        background: white;
+
+        &:hover {
+          background: #f0f7ff;
+        }
+      }
+
+      &.solid {
+        background: $accent;
+        color: white;
+        border: none;
+
+        &:hover {
+          background: $accent-2;
+        }
+      }
+    }
+  }
+}

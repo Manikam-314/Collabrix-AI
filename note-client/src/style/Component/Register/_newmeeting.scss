@@ -1,0 +1,84 @@
+// _newMeeting.scss
+
+.new-meeting-page {
+  .new-meeting-box {
+    max-width: 500px;
+    margin: 120px auto;
+    padding: 40px;
+    border-radius: 8px;
+    background: #ffffff;
+    border: 1px solid #e2e2e2;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    text-align: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+    h2 {
+      margin-top: 0;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #232333;
+    }
+
+    p {
+      margin: 12px 0 24px;
+      color: #747487;
+      font-size: 1rem;
+    }
+
+    .meeting-link-box {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8f9fa;
+      border: 1px solid #d9d9d9;
+      padding: 12px 16px;
+      border-radius: 4px;
+      margin: 20px 0;
+      font-weight: 600;
+      color: #2d8cff;
+
+      span {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.9rem;
+        margin-right: 12px;
+        text-align: left;
+      }
+
+      .copy-btn {
+        margin-left: 12px;
+        cursor: pointer;
+        border: none;
+        background: #2d8cff;
+        color: white;
+        border-radius: 4px;
+        padding: 8px 14px;
+        font-weight: 600;
+        transition: background 0.2s;
+
+        &:hover {
+          background: #0066da;
+        }
+      }
+    }
+
+    .btn.solid {
+      margin-top: 12px;
+      padding: 12px 24px;
+      border-radius: 4px;
+      background: #2d8cff;
+      color: white;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s;
+
+      &:hover {
+        background: #0066da;
+      }
+    }
+  }
+}

@@ -1,0 +1,119 @@
+$bg: #ffffff;
+$panel: #ffffff;
+$text: #232333;
+$muted: #747487;
+$line: #e2e2e2;
+$accent: #2d8cff;
+$accent-2: #0066da;
+$radius: 8px;
+
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 80px 20px;
+  min-height: 80vh;
+  background: #f5f5f5;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+  .auth-card {
+    background: #ffffff;
+    border: 1px solid $line;
+    border-radius: $radius;
+    padding: 40px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    text-align: center;
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 24px;
+      color: $text;
+      font-weight: 700;
+    }
+
+    .auth-subtitle {
+      color: $muted;
+      font-size: 0.95rem;
+      margin-bottom: 30px;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+
+      .form-group {
+        text-align: left;
+
+        label {
+          display: block;
+          font-weight: 600;
+          margin-bottom: 8px;
+          color: $text;
+          font-size: 0.85rem;
+        }
+
+        input {
+          width: 100%;
+          padding: 10px 14px;
+          border: 1px solid $line;
+          border-radius: 4px;
+          background: #fff;
+          color: $text;
+          font-size: 1rem;
+          outline: none;
+          transition: border-color 0.2s;
+
+          &:focus {
+            border-color: $accent;
+            box-shadow: 0 0 0 2px rgba($accent, 0.1);
+          }
+        }
+      }
+
+      .btn.full-width {
+        width: 100%;
+        padding: 12px;
+        font-size: 1rem;
+        border-radius: 4px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.2s;
+
+        &.solid {
+          background: $accent;
+          color: white;
+          border: none;
+
+          &:hover {
+            background: $accent-2;
+          }
+        }
+      }
+    }
+
+    .auth-footer {
+      margin-top: 20px;
+      color: $muted;
+      font-size: 0.9rem;
+
+      a {
+        color: $accent;
+        text-decoration: none;
+        font-weight: 600;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    .auth-card {
+      padding: 30px 20px;
+    }
+  }
+}
