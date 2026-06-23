@@ -39,7 +39,16 @@ public class MeetingController {
     @GetMapping("/get-meeting/{meetingId}")
     public ResponseEntity<?> getMeeting(@PathVariable String meetingId) {
         return meetingRepository.findById(meetingId)
-                .map(meeting -> ResponseEntity.ok(Map.of("meetingId", meeting.getId(), "hostId", meeting.getHostId())))
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/past-meetings")
+    public ResponseEntity<?> getPastMeetings() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+        java.util.List<Meeting> meetings = meetingRepository.findByHostIdOrderByCreatedAtDesc(userDetails.getId());
+        return ResponseEntity.ok(meetings);
     }
 }
