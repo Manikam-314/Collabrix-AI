@@ -15,7 +15,7 @@ async function runTests() {
     console.log("🕒 Waiting 3 seconds for server boot-up...");
     await sleep(3000);
 
-    const backendUrl = "http://localhost:8080";
+    const backendUrl = "http://54.90.225.145:8080";
     const testEmail = `testuser_${Date.now()}@example.com`;
     const testPassword = "securepassword123";
     const testName = "Test Developer";
@@ -34,7 +34,7 @@ async function runTests() {
       password: testPassword,
       name: testName,
     });
-    
+
     if (signupRes.status === 201 && signupRes.data.userId) {
       console.log(`✅ Registration Successful! User ID: ${signupRes.data.userId}`);
       userId = signupRes.data.userId;

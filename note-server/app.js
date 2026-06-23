@@ -30,7 +30,7 @@ app.use(bodyParser.json());
 
 app.use("/auth", authRouter);
 app.use("/meetings", meetingRoute);
-app.use("/meetingAi", aiRoute); 
+app.use("/meetingAi", aiRoute);
 
 const server = http.createServer(app);
 
@@ -46,7 +46,7 @@ async function startServer() {
       console.log("✅ In-memory MongoDB connected");
 
       server.listen(8080, () => {
-        console.log("🚀 Server running at http://localhost:8080");
+        console.log("🚀 Server running at http://54.90.225.145:8080");
       });
 
       setupWebSocket(server)

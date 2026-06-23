@@ -4,7 +4,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function runTests() {
   try {
-    const backendUrl = "http://localhost:8080";
+    const backendUrl = "http://54.90.225.145:8080";
     const testEmail = `testuser_${Date.now()}@example.com`;
     const testPassword = "securepassword123";
     const testName = "Test Developer";
@@ -23,7 +23,7 @@ async function runTests() {
       password: testPassword,
       name: testName,
     });
-    
+
     if (signupRes.status === 200) {
       console.log(`✅ Registration Successful! Response: ${JSON.stringify(signupRes.data)}`);
     } else {
