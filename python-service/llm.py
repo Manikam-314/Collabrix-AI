@@ -13,6 +13,6 @@ def get_llm():
 
 def get_embeddings():
     return GoogleGenerativeAIEmbeddings(
-        model="models/text-embedding-004",
+        model="models/embedding-001",
         google_api_key=GEMINI_API_KEY
     )

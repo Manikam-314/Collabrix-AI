@@ -11,26 +11,16 @@ from qdrant_client.http.models import PointStruct, VectorParams, Distance, Filte
 import uuid
 from rag_chain import get_rag_chain
 
-# Configure Qdrant
-QDRANT_HOST = os.environ.get("QDRANT_HOST", "localhost")
-QDRANT_PORT = int(os.environ.get("QDRANT_PORT", 6333))
-QDRANT_API_KEY = os.environ.get("QDRANT_API_KEY", None)
-QDRANT_URL = os.environ.get("QDRANT_URL", None)
-
+# Load .env file automatically
 try:
-    if QDRANT_URL:
-        qdrant_client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
-    else:
-        qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, api_key=QDRANT_API_KEY)
-        
-    if not qdrant_client.collection_exists("meeting_chunks"):
-        qdrant_client.create_collection(
-            collection_name="meeting_chunks",
-            vectors_config=VectorParams(size=768, distance=Distance.COSINE),
-        )
-except Exception as e:
-    print(f"Warning: Qdrant setup failed. Is Docker running? Error: {e}")
-    qdrant_client = None
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv not installed, rely on system env vars
+
+
+# Configure Qdrant
+from qdrant_config import qdrant_client
 
 app = Flask(__name__)
 CORS(app)
@@ -51,10 +41,13 @@ own same so than too very
 
 # ------------------ Legacy TF Summarizer (Fallback) ------------------
 def summarize_text(text, max_sentences=3):
-    # Split into sentences (fallback if no punctuation)
-    sentences = re.split(r'(?<=[.!?]) +', text.strip())
-    if len(sentences) == 1:  
-        sentences = re.split(r'\b(and|so|then|by|because|but|also|we need to)\b', text, flags=re.IGNORECASE)
+    # Split by newlines first (speaker: text format), then by punctuation
+    sentences = [s.strip() for s in text.strip().split('\n') if s.strip()]
+    if len(sentences) <= 1:
+        sentences = re.split(r'(?<=[.!?]) +', text.strip())
+    if len(sentences) <= 1:
+        # Last resort: split on sentence-ending punctuation patterns only
+        sentences = re.split(r'(?<=[,;]) +', text.strip())
         sentences = [s.strip() for s in sentences if s.strip()]
 
     if len(sentences) <= max_sentences:
@@ -89,11 +82,17 @@ ACTION_WORDS = [
 ]
 
 def split_into_sentences(text):
+    # Priority 1: Split by newlines (handles our speaker: text\n format perfectly)
+    lines = [s.strip() for s in text.strip().split('\n') if s.strip()]
+    if len(lines) > 1:
+        return lines
+    # Priority 2: Split by sentence-ending punctuation
     sentences = re.split(r'(?<=[.!?]) +', text.strip())
-    if len(sentences) == 1:  
-        sentences = re.split(r'\b(and|so|then|by|because|but|also|we need to)\b', text, flags=re.IGNORECASE)
-        sentences = [s.strip() for s in sentences if s.strip()]
-    return sentences
+    if len(sentences) > 1:
+        return sentences
+    # Priority 3: Split by comma/semicolon only (NOT conjunctions - that destroys context)
+    sentences = re.split(r'(?<=[,;]) +', text.strip())
+    return [s.strip() for s in sentences if s.strip()]
 
 def extract_highlights(text):
     sentences = split_into_sentences(text)
@@ -219,7 +218,7 @@ def summary():
 
         if GEMINI_API_KEY:
             try:
-                model = genai.GenerativeModel("gemini-1.5-flash")
+                model = genai.GenerativeModel("gemini-2.0-flash")
                 prompt = (
                     "You are an expert meeting summarizer. Generate a well-structured summary of the following meeting transcript.\n"
                     "Requirements:\n"
@@ -255,7 +254,7 @@ def highlights():
 
         if GEMINI_API_KEY:
             try:
-                model = genai.GenerativeModel("gemini-1.5-flash")
+                model = genai.GenerativeModel("gemini-2.0-flash")
                 prompt = (
                     "Extract meeting highlights, action items, decisions made, and risks/blockers from the following meeting transcript.\n"
                     "The output must be a valid JSON object matching this schema:\n"
@@ -319,7 +318,7 @@ def index_meeting():
     try:
         for chunk in chunks:
             emb_res = genai.embed_content(
-                model="models/text-embedding-004",
+                model="models/embedding-001",
                 content=chunk["text"],
                 task_type="retrieval_document"
             )

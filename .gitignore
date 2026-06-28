@@ -14,3 +14,8 @@ bin/
 *.war
 qdrant_storage/
 mongo_data/
+qdrant_local/
+test_ai_pipeline.cjs
+test_ai_pipeline.js
+note-client/test_ai_pipeline.cjs
+note-client/test_ai_pipeline.js

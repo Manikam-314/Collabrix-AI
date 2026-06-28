@@ -26,7 +26,7 @@ const RemoteVideo: React.FC<RemoteVideoProps> = ({
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
     }
-  }, [stream]);
+  }, [stream, videoOn]);
 
   const getConnectionStateClass = () => {
     switch (connectionState) {

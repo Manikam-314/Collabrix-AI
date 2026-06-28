@@ -22,7 +22,7 @@ const LocalVideo: React.FC<LocalVideoProps> = ({
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
     }
-  }, [stream]);
+  }, [stream, videoOn]);
 
   return (
     <div className={`video-card local ${isActiveSpeaker ? "active-speaker" : ""}`}>

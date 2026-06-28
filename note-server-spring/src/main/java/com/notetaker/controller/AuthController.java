@@ -51,7 +51,7 @@ public class AuthController {
 
             return ResponseEntity.ok(new JwtResponse(jwt,
                     userDetails.getId(),
-                    userDetails.getUsername(),
+                    userDetails.getName(),
                     userDetails.getUsername()));
         } catch (Exception e) {
             System.err.println("❌ [Auth] Login failed for email: " + loginRequest.getEmail());

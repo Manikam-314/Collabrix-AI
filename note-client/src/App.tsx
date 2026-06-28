@@ -5,6 +5,7 @@ import Login from "./Components/Authentication/Login";
 import Home from "./Pages/Home";
 import NewMeeting from "./Components/Extra-Feature/NewMeetingPage";
 import MeetingRoom from "./Components/Extra-Feature/MeetingRoom";
+import MeetingDetails from "./Components/Extra-Feature/MeetingDetails";
 
 const isTokenExpired = (token: string) => {
   try {
@@ -41,6 +42,7 @@ function App() {
           <Route path="/authenticated-home" element={<Home/>}/>
           <Route path="/new-meeting" element={<ProtectedRoute><NewMeeting/></ProtectedRoute>}/>
           <Route path="/meeting/:id" element={<ProtectedRoute><MeetingRoom/></ProtectedRoute>}/>
+          <Route path="/meeting-details/:id" element={<ProtectedRoute><MeetingDetails/></ProtectedRoute>}/>
         </Routes>
       </Router>
     </>

@@ -3,9 +3,22 @@ import HomeCard from "../Extra-Feature/HomeCard";
 import Footer from "../Footer/Footer";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import axios from "axios";
+import { API_BASE_URL } from "../../apiConfig";
+
+interface Meeting {
+  id: string;
+  hostId: string;
+  createdAt: number;
+  title: string;
+  summary: string;
+}
 
 const AuthenticatedHome: React.FC = () => {
   const navigate = useNavigate();
+  const [lastMeetingId, setLastMeetingId] = useState<string>("");
+  const [pastMeetings, setPastMeetings] = useState<Meeting[]>([]);
+  const [loadingMeetings, setLoadingMeetings] = useState(true);
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,13 +36,31 @@ const AuthenticatedHome: React.FC = () => {
     navigate("/new-meeting");
   };
 
-  const [lastMeetingId, setLastMeetingId] = useState<string>("");
-
   useEffect(() => {
     const savedId = localStorage.getItem("lastMeetingId");
     if (savedId) {
       setLastMeetingId(savedId);
     }
+
+    const fetchPastMeetings = async () => {
+      try {
+        setLoadingMeetings(true);
+        const token = localStorage.getItem("token");
+        if (token) {
+          const config = {
+            headers: { Authorization: `Bearer ${token}` }
+          };
+          const response = await axios.get(`${API_BASE_URL}/meetings/past-meetings`, config);
+          setPastMeetings(response.data || []);
+        }
+      } catch (err) {
+        console.error("Error loading past meetings:", err);
+      } finally {
+        setLoadingMeetings(false);
+      }
+    };
+
+    fetchPastMeetings();
   }, []);
 
   return (
@@ -152,6 +183,52 @@ const AuthenticatedHome: React.FC = () => {
           <span className="lo">Vertex</span>
         </div>
       </section>
+
+      {/* Past Meetings Dashboard Section */}
+      <section className="past-meetings-section">
+        <div className="container">
+          <h2 className="section-title">Past Meeting History</h2>
+          
+          {loadingMeetings ? (
+            <div className="meetings-loader">
+              <div className="mini-spinner"></div>
+              <p>Loading meeting intelligence...</p>
+            </div>
+          ) : pastMeetings.length === 0 ? (
+            <div className="no-meetings-state">
+              <div className="no-meetings-icon">🗓️</div>
+              <h3>No meetings hosted yet</h3>
+              <p>Host your first call using "New Meeting" and your AI summaries will automatically persist here.</p>
+            </div>
+          ) : (
+            <div className="meetings-grid">
+              {pastMeetings.map((mtg) => (
+                <div key={mtg.id} className="meeting-history-card">
+                  <div className="card-header">
+                    <span className="meeting-badge">Host ID: {mtg.hostId ? mtg.hostId.substring(0, 8) : "Collabrix"}</span>
+                    <span className="date-string">{new Date(mtg.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <h3>{mtg.title || `Meeting - ${mtg.id.substring(0, 8)}`}</h3>
+                  <p className="summary-snippet">
+                    {mtg.summary 
+                      ? mtg.summary.length > 120 
+                        ? `${mtg.summary.substring(0, 120)}...` 
+                        : mtg.summary
+                      : "Meeting completed. No summary recorded."}
+                  </p>
+                  <button 
+                    className="btn-details" 
+                    onClick={() => navigate(`/meeting-details/${mtg.id}`)}
+                  >
+                    View Details &amp; AI Notes →
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
       <HomeCard />
       <Footer />
     </section>

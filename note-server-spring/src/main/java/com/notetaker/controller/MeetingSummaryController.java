@@ -2,7 +2,9 @@ package com.notetaker.controller;
 
 import com.notetaker.dto.CaptionRequest;
 import com.notetaker.model.Caption;
+import com.notetaker.model.Meeting;
 import com.notetaker.repository.CaptionRepository;
+import com.notetaker.repository.MeetingRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +23,9 @@ public class MeetingSummaryController {
 
     @Autowired
     private CaptionRepository captionRepository;
+
+    @Autowired
+    private MeetingRepository meetingRepository;
 
     @Value("${python.service.url}")
     private String pythonServiceUrl;
@@ -51,7 +56,15 @@ public class MeetingSummaryController {
                     pythonServiceUrl + "/summary", 
                     Map.of("transcript", fullText), 
                     Map.class);
-            return ResponseEntity.ok(response.getBody());
+            Map<String, Object> body = response.getBody();
+            if (body != null && body.containsKey("summary")) {
+                String summaryText = (String) body.get("summary");
+                meetingRepository.findById(meetingId).ifPresent(m -> {
+                    m.setSummary(summaryText);
+                    meetingRepository.save(m);
+                });
+            }
+            return ResponseEntity.ok(body);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
@@ -69,7 +82,35 @@ public class MeetingSummaryController {
                     pythonServiceUrl + "/highlights", 
                     Map.of("transcript", fullText), 
                     Map.class);
-            return ResponseEntity.ok(response.getBody());
+            Map<String, Object> body = response.getBody();
+            if (body != null) {
+                meetingRepository.findById(meetingId).ifPresent(m -> {
+                    if (body.containsKey("highlights")) {
+                        m.setHighlights((List<Map<String, Object>>) body.get("highlights"));
+                    }
+                    if (body.containsKey("actionItems")) {
+                        m.setActionItems((List<Map<String, Object>>) body.get("actionItems"));
+                    }
+                    if (body.containsKey("decisions")) {
+                        m.setDecisions((List<String>) body.get("decisions"));
+                    }
+                    if (body.containsKey("risks")) {
+                        m.setRisks((List<String>) body.get("risks"));
+                    }
+                    meetingRepository.save(m);
+                });
+            }
+            return ResponseEntity.ok(body);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/captions/{meetingId}")
+    public ResponseEntity<?> getCaptions(@PathVariable String meetingId) {
+        try {
+            List<Caption> captions = captionRepository.findByMeetingIdOrderByTimestampAsc(meetingId);
+            return ResponseEntity.ok(captions);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }

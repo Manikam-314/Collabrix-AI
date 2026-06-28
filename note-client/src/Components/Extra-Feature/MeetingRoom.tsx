@@ -93,6 +93,7 @@ const MeetingRoom: React.FC = () => {
   const [activeSpeakerId, setActiveSpeakerId] = useState<string | null>(null);
   const peersRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const audioContextsRef = useRef<Map<string, { context: AudioContext; analyser: AnalyserNode }>>(new Map());
+  const lastSpokenTimesRef = useRef<Map<string, number>>(new Map());
 
   // --- Recording States ---
   const [recording, setRecording] = useState(false);
@@ -144,7 +145,11 @@ const MeetingRoom: React.FC = () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
-        audio: true,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
       });
       streamRef.current = stream;
       setLocalStream(stream);
@@ -165,7 +170,11 @@ const MeetingRoom: React.FC = () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: false,
-          audio: true,
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
         });
         streamRef.current = stream;
         setLocalStream(stream);
@@ -497,8 +506,9 @@ const MeetingRoom: React.FC = () => {
 
   // --- Active Speaker Detection Loop ---
   const detectActiveSpeaker = () => {
+    const now = Date.now();
     let maxVolume = 0;
-    let speakerId: string | null = null;
+    let loudestSpeakerId: string | null = null;
 
     // Check remote audio levels
     remoteParticipants.forEach((p) => {
@@ -508,7 +518,7 @@ const MeetingRoom: React.FC = () => {
           const volume = getStreamVolume(analyser);
           if (volume > maxVolume && volume > 15) {
             maxVolume = volume;
-            speakerId = p.userId;
+            loudestSpeakerId = p.userId;
           }
         }
       }
@@ -521,10 +531,28 @@ const MeetingRoom: React.FC = () => {
         const volume = getStreamVolume(analyser);
         if (volume > maxVolume && volume > 15) {
           maxVolume = volume;
-          speakerId = "local";
+          loudestSpeakerId = "local";
         }
       }
     }
+
+    // If someone is speaking, update their last spoken timestamp
+    if (loudestSpeakerId) {
+      lastSpokenTimesRef.current.set(loudestSpeakerId, now);
+    }
+
+    // Determine who is currently active based on speaking + 1.5s cooldown
+    let speakerId: string | null = null;
+    let highestSpokenTime = 0;
+
+    lastSpokenTimesRef.current.forEach((timestamp, id) => {
+      if (now - timestamp < 1500) { // 1.5 seconds hang time / cooldown
+        if (timestamp > highestSpokenTime) {
+          highestSpokenTime = timestamp;
+          speakerId = id;
+        }
+      }
+    });
 
     if (speakerId !== activeSpeakerId) {
       setActiveSpeakerId(speakerId);
@@ -790,6 +818,8 @@ const MeetingRoom: React.FC = () => {
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) return;
+    if (!micOn) return;
+    if (!localStream) return;
 
     if (!recognitionRef.current) {
       const recognition = new SpeechRecognition();
@@ -798,16 +828,18 @@ const MeetingRoom: React.FC = () => {
       recognition.lang = "en-US";
 
       recognition.onresult = async (event: any) => {
+        console.log("🎤 Speech recognition onresult fired. Results length:", event.results.length);
         let interimTranscript = "";
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
           if (result.isFinal) {
             const finalText = result[0].transcript.trim();
-            setCaptions(finalText);
+            console.log("✅ Final transcript chunk:", finalText);
+            const localUserName = localStorage.getItem("name") || "You";
+            setCaptions(`${localUserName}: ${finalText}`);
 
             if (meetingId && finalText) {
               try {
-                const localUserName = localStorage.getItem("name") || "You";
                 await axios.post(`${API_BASE_URL}/meetingAi/caption`, {
                   meetingId,
                   transcript: finalText,
@@ -821,17 +853,32 @@ const MeetingRoom: React.FC = () => {
             interimTranscript += result[0].transcript + " ";
           }
         }
+        if (interimTranscript) {
+          console.log("⏳ Interim transcript:", interimTranscript);
+        }
         if (captionsOn && micOn && interimTranscript) {
           setCaptions(interimTranscript);
         }
       };
 
       recognition.onerror = (event: any) => {
-        if (["aborted", "no-speech", "network"].includes(event.error)) {
+        console.error("❌ Speech recognition error:", event.error);
+        if (event.error === "language-not-supported") {
+          console.warn("en-IN not supported, falling back to en-US");
+          recognition.lang = "en-US";
+        }
+        if (["aborted", "no-speech", "network", "language-not-supported"].includes(event.error)) {
           if (!isRestartingRef.current) {
             isRestartingRef.current = true;
             setTimeout(() => {
-              if (micOn && !screenSharing) recognition.start();
+              if (micOn && !screenSharing && localStream) {
+                try {
+                  console.log("🔄 Re-starting speech recognition after recoverable error:", event.error);
+                  recognition.start();
+                } catch (e) {
+                  console.error("Failed to restart speech recognition:", e);
+                }
+              }
               isRestartingRef.current = false;
             }, 1000);
           }
@@ -839,17 +886,42 @@ const MeetingRoom: React.FC = () => {
       };
 
       recognition.onend = () => {
-        if (!isRestartingRef.current && micOn && !screenSharing) {
-          setTimeout(() => recognition.start(), 500);
+        console.log("⏹️ Speech recognition ended");
+        if (!isRestartingRef.current && micOn && !screenSharing && localStream) {
+          setTimeout(() => {
+            try {
+              console.log("🔄 Auto-restarting speech recognition on end...");
+              recognition.start();
+            } catch (e) {
+              console.warn("SpeechRecognition already started or failed to start in onend:", e);
+            }
+          }, 500);
         }
       };
 
-      recognition.start();
+      try {
+        console.log("🚀 Initializing & Starting SpeechRecognition with lang:", recognition.lang);
+        recognition.start();
+      } catch (e) {
+        console.error("SpeechRecognition start failed:", e);
+      }
       recognitionRef.current = recognition;
     }
 
-    return () => recognitionRef.current?.stop();
-  }, [captionsOn, micOn, screenSharing, meetingId]);
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.onend = null;
+        recognitionRef.current.onerror = null;
+        recognitionRef.current.onresult = null;
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {
+          console.warn("Failed to stop SpeechRecognition:", e);
+        }
+        recognitionRef.current = null;
+      }
+    };
+  }, [captionsOn, micOn, screenSharing, meetingId, localStream]);
 
   const fetchSummaryAndHighlights = async () => {
     try {

@@ -7,19 +7,7 @@ from llm import get_embeddings
 from typing import List
 import os
 
-QDRANT_HOST = os.environ.get("QDRANT_HOST", "localhost")
-QDRANT_PORT = int(os.environ.get("QDRANT_PORT", 6333))
-QDRANT_API_KEY = os.environ.get("QDRANT_API_KEY", None)
-QDRANT_URL = os.environ.get("QDRANT_URL", None)
-
-try:
-    if QDRANT_URL:
-        qdrant_client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
-    else:
-        qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, api_key=QDRANT_API_KEY)
-except Exception as e:
-    print(f"Warning: Qdrant setup failed. Error: {e}")
-    qdrant_client = None
+from qdrant_config import qdrant_client
 
 class MeetingRetriever(BaseRetriever):
     meeting_id: str
