@@ -98,6 +98,7 @@ const MeetingRoom: React.FC = () => {
   // --- Recording States ---
   const [recording, setRecording] = useState(false);
   const [recordingStatus, setRecordingStatus] = useState("");
+  const [lectureMode, setLectureMode] = useState(false);
 
   // --- Time updater ---
   useEffect(() => {
@@ -493,6 +494,14 @@ const MeetingRoom: React.FC = () => {
           setRecording(false);
           setRecordingStatus("");
         }
+        else if (type === "TOGGLE_LECTURE_MODE") {
+          setLectureMode(data.enabled);
+        }
+        else if (type === "CAPTION") {
+          if (captionsOn) {
+            setCaptions(`${senderUserName}: ${data.text}`);
+          }
+        }
       } catch (err) {
         // Parse chat text messages
         setMessages((prev) => [...prev, { text: event.data.toString(), sent: false }]);
@@ -807,6 +816,12 @@ const MeetingRoom: React.FC = () => {
     }
   };
 
+  const toggleLectureMode = () => {
+    const nextState = !lectureMode;
+    setLectureMode(nextState);
+    broadcastState("TOGGLE_LECTURE_MODE", { enabled: nextState });
+  };
+
   const toggleCaptions = () => {
     setCaptionsOn((prev) => !prev);
     if (captionsOn) setCaptions("");
@@ -838,15 +853,22 @@ const MeetingRoom: React.FC = () => {
             const localUserName = localStorage.getItem("name") || "You";
             setCaptions(`${localUserName}: ${finalText}`);
 
+            // Broadcast final caption to all users via WebSocket
+            broadcastState("CAPTION", { text: finalText });
+
             if (meetingId && finalText) {
-              try {
-                await axios.post(`${API_BASE_URL}/meetingAi/caption`, {
-                  meetingId,
-                  transcript: finalText,
-                  speaker: localUserName,
-                });
-              } catch (err) {
-                console.error("❌ Error saving caption:", err);
+              // If lecture mode is enabled, only host (admin) captions are stored/summarized
+              const shouldSave = !lectureMode || isHost;
+              if (shouldSave) {
+                try {
+                  await axios.post(`${API_BASE_URL}/meetingAi/caption`, {
+                    meetingId,
+                    transcript: finalText,
+                    speaker: localUserName,
+                  });
+                } catch (err) {
+                  console.error("❌ Error saving caption:", err);
+                }
               }
             }
           } else {
@@ -1063,6 +1085,11 @@ const MeetingRoom: React.FC = () => {
             <div className="recording-status-indicator">
               <span className="rec-dot pulsing-red"></span>
               <span className="rec-text">REC</span>
+            </div>
+          )}
+          {lectureMode && (
+            <div className="recording-status-indicator" style={{ background: "#d97706", marginLeft: "10px" }}>
+              <span className="rec-text" style={{ display: "flex", alignItems: "center", gap: "4px" }}>🎙️ Host Only Notes</span>
             </div>
           )}
         </div>
@@ -1336,9 +1363,28 @@ const MeetingRoom: React.FC = () => {
           <button className={`btn-circle ${screenSharing ? "active" : ""}`} onClick={shareScreen}>
             <FaDesktop />
           </button>
-          <button className={`btn-circle recording-btn ${recording ? "active" : ""}`} onClick={toggleRecording}>
+           <button className={`btn-circle recording-btn ${recording ? "active" : ""}`} onClick={toggleRecording}>
             <FaCircle />
           </button>
+          {isHost ? (
+            <button 
+              className={`btn-circle ${lectureMode ? "active" : ""}`} 
+              onClick={toggleLectureMode}
+              title={lectureMode ? "Disable Lecture Mode (Record Everyone)" : "Enable Lecture Mode (Record Host Only)"}
+              style={{ fontSize: "0.85em", fontWeight: "bold", position: "relative" }}
+            >
+              LM
+            </button>
+          ) : (
+            <button 
+              className="btn-circle" 
+              disabled
+              title="Lecture Mode is host controlled"
+              style={{ opacity: 0.4, cursor: "not-allowed", fontSize: "0.85em", fontWeight: "bold" }}
+            >
+              LM
+            </button>
+          )}
           <button className="btn-circle danger" onClick={hangUp}>
             <FaPhone />
           </button>

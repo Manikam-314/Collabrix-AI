@@ -161,8 +161,7 @@ public class MeetingWebSocketHandler extends TextWebSocketHandler {
         Set<WebSocketSession> roomSessions = rooms.get(meetingId);
         if (roomSessions != null) {
             for (WebSocketSession s : roomSessions) {
-                if (s.isOpen() && (excludeSessionId == null || !s.getId().equals(s.getId()))) { // Keep standard exclusion check or excludeSessionId comparison
-                    // Wait, let's write it correctly: s.getId().equals(excludeSessionId) is what we want! Let's check:
+                if (s.isOpen()) {
                     if (excludeSessionId != null && s.getId().equals(excludeSessionId)) {
                         continue;
                     }
