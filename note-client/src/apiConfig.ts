@@ -17,9 +17,9 @@ const getWsUrl = () => {
   if (import.meta.env.PROD) {
     // Use same origin — nginx proxies /ws to backend container
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    return `${protocol}//${window.location.host}`;
+    return `${protocol}//${window.location.host}/ws`;
   }
-  return "ws://localhost:8080";
+  return "ws://localhost:8080/ws";
 };
 
 export const API_BASE_URL = getApiUrl();
