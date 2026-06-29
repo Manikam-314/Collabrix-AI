@@ -121,6 +121,52 @@
     }
   }
 
+  @media (max-width: 768px) {
+    .hero {
+      grid-template-columns: 1fr;
+      padding: 40px 20px;
+      text-align: center;
+      gap: 24px;
+
+      &-content {
+        h1 {
+          font-size: 2.2rem;
+        }
+
+        .lead {
+          font-size: 1rem;
+          margin-bottom: 24px;
+        }
+
+        .join-form {
+          flex-direction: column;
+          align-items: stretch;
+
+          input {
+            width: 100%;
+            min-width: unset;
+          }
+
+          .btn {
+            width: 100%;
+          }
+        }
+
+        .hero-bullets {
+          flex-direction: column;
+          align-items: center;
+          margin-top: 24px;
+          gap: 8px;
+        }
+      }
+
+      &-visual {
+        order: -1;
+      }
+    }
+  }
+
+
   .logos {
     padding: 60px 24px;
     background: #f8f9fa;
@@ -186,6 +232,53 @@
       p { color: var(--muted); padding-top: 12px; }
     }
   }
+
+  @media (max-width: 768px) {
+    .features {
+      margin: 60px auto;
+      .section-title { font-size: 1.8rem; margin-bottom: 30px; }
+      .grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        .card {
+          padding: 24px;
+        }
+      }
+    }
+
+    .ai-notes {
+      padding: 60px 16px;
+      .container {
+        .section-title { font-size: 1.8rem; margin-bottom: 24px; }
+        .notes-grid {
+          grid-template-columns: 1fr;
+          gap: 16px;
+          .note-card {
+            padding: 20px;
+          }
+        }
+      }
+    }
+
+    .security {
+      margin: 60px auto;
+      &-inner {
+        grid-template-columns: 1fr;
+        gap: 30px;
+        .section-title { font-size: 1.8rem; }
+        p { font-size: 1rem; }
+        .checks {
+          grid-template-columns: 1fr;
+        }
+      }
+    }
+
+    .faq {
+      margin: 60px 16px;
+      .section-title { font-size: 1.8rem; }
+    }
+  }
+
 
   .past-meetings-section {
     background: #f8fafc;
@@ -324,6 +417,23 @@
         &:hover {
           color: var(--accent-2);
         }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    .past-meetings-section {
+      padding: 40px 16px;
+      .section-title {
+        font-size: 1.8rem;
+        margin-bottom: 24px;
+      }
+      .meetings-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .meeting-history-card {
+        padding: 16px;
       }
     }
   }

@@ -100,4 +100,23 @@ $radius: 8px;
       }
     }
   }
+
+  @media (max-width: 768px) {
+    padding: 12px 20px;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+
+    .nav-links {
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .nav-cta {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 }
+
