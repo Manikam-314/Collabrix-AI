@@ -62,6 +62,7 @@ public class SecurityConfig {
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> 
             auth.requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/error").permitAll()
                 .requestMatchers("/meetings/**").authenticated()
                 .requestMatchers("/meetingAi/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()

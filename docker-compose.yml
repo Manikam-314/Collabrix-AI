@@ -48,7 +48,7 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - MONGODB_URI=${MONGODB_URI:-mongodb+srv://collabrix_user:mmmmmmmm@cluster0.2i10uvd.mongodb.net/collabrix?retryWrites=true&w=majority&appName=Cluster0}
+      - MONGODB_URI=${MONGODB_URI:-mongodb://mongodb:27017/collabrix}
       - SPRING_AUTOCONFIGURE_EXCLUDE=${SPRING_AUTOCONFIGURE_EXCLUDE:-de.flapdoodle.embed.mongo.spring.autoconfigure.EmbeddedMongoAutoConfiguration}
       - PYTHON_SERVICE_URL=http://ai-service:5000
       - JWT_SECRET=${JWT_SECRET:-9a4f2c8d3b7a1e6f45c8a0b3f267d8b1d4e6f3c8a9d2b5f8e3a9c8b5f6v8a3d99a4f2c8d3b7a1e6f45c8a0b3f267d8b1d4e6f3c8a9d2b5f8e3a9c8b5f6v8a3d9}
