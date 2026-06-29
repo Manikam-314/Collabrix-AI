@@ -12,8 +12,18 @@
   --radius: 8px;
 }
 
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 .home-bg {
   width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   background: #ffffff;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
