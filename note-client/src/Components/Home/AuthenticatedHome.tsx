@@ -23,7 +23,18 @@ const AuthenticatedHome: React.FC = () => {
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
     const input = document.getElementById("meetingIdInput") as HTMLInputElement;
-    const meetingId = input?.value || localStorage.getItem("lastMeetingId");
+    let meetingId = input?.value?.trim() || "";
+    
+    // Extract ID if a full meeting URL is pasted
+    if (meetingId.includes("/meeting/")) {
+      const parts = meetingId.split("/meeting/");
+      meetingId = parts[parts.length - 1];
+    }
+    
+    // Fallback to last meeting ID if empty
+    if (!meetingId) {
+      meetingId = localStorage.getItem("lastMeetingId") || "";
+    }
     
     if (meetingId) {
       navigate(`/meeting/${meetingId}`);
