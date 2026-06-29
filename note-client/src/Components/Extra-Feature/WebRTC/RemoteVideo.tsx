@@ -26,7 +26,7 @@ const RemoteVideo: React.FC<RemoteVideoProps> = ({
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
     }
-  }, [stream, videoOn]);
+  }, [stream]);
 
   const getConnectionStateClass = () => {
     switch (connectionState) {
@@ -79,14 +79,15 @@ const RemoteVideo: React.FC<RemoteVideoProps> = ({
         </div>
       )}
 
-      {videoOn && stream ? (
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          className="video-element"
-        />
-      ) : (
+      {/* ALWAYS keep <video> mounted so audio plays even when camera is off */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        className="video-element"
+        style={{ display: videoOn && stream ? "block" : "none" }}
+      />
+      {(!videoOn || !stream) && (
         <div className="avatar-placeholder">
           <div className="avatar-circle">
             {userName.charAt(0).toUpperCase()}

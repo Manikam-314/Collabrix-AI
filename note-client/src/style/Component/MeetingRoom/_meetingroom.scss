@@ -196,6 +196,68 @@
           grid-template-rows: none;
           max-height: 160px;
         }
+      // Speaker View Layout — active speaker big, others small
+      &.layout-speaker-view {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .main-speaker-container {
+          flex: 3;
+          display: flex;
+          min-height: 0;
+
+          .video-card {
+            width: 100%;
+            height: 100%;
+            border-radius: 20px;
+          }
+        }
+
+        .small-participants-strip {
+          flex: 1;
+          display: flex;
+          gap: 10px;
+          min-height: 0;
+          max-height: 160px;
+          overflow-x: auto;
+
+          .video-card {
+            flex: 0 0 200px;
+            height: 100%;
+            min-height: 100px;
+            border-radius: 14px;
+
+            .avatar-placeholder .avatar-circle {
+              width: 48px;
+              height: 48px;
+              font-size: 1.2rem;
+            }
+
+            .video-info-overlay {
+              bottom: 6px;
+              left: 6px;
+              right: 6px;
+              padding: 4px 10px;
+              border-radius: 8px;
+
+              .participant-name {
+                font-size: 0.75rem;
+              }
+
+              .status-badges .badge {
+                width: 22px;
+                height: 22px;
+                font-size: 0.65rem;
+
+                &.speaker-badge {
+                  padding: 2px 5px;
+                  font-size: 0.6rem;
+                }
+              }
+            }
+          }
+        }
       }
 
       .participants-grid {
@@ -692,6 +754,84 @@
         &.active { background: #0ea5e9; color: white; border-color: transparent; }
         &.danger { background: #ef4444; color: white; border-color: transparent; &:hover { background: #dc2626; } }
       }
+      .device-menu-wrapper {
+        position: relative;
+
+        .device-menu-popup {
+          position: absolute;
+          bottom: calc(100% + 16px);
+          left: 50%;
+          transform: translateX(-50%);
+          width: 320px;
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 16px;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+          padding: 16px;
+          z-index: 100;
+          max-height: 400px;
+          overflow-y: auto;
+
+          .device-section {
+            margin-bottom: 16px;
+
+            &:last-child {
+              margin-bottom: 0;
+            }
+
+            h4 {
+              font-size: 0.8rem;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              color: #64748b;
+              margin: 0 0 10px 0;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              font-weight: 700;
+              padding-bottom: 8px;
+              border-bottom: 1px solid #f1f5f9;
+            }
+
+            .no-devices {
+              font-size: 0.85rem;
+              color: #94a3b8;
+              margin: 4px 0;
+            }
+
+            .device-option {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              padding: 10px 12px;
+              border-radius: 10px;
+              cursor: pointer;
+              font-size: 0.85rem;
+              color: #334155;
+              font-weight: 500;
+              transition: background 0.15s;
+              margin-bottom: 4px;
+
+              &:hover {
+                background: #f1f5f9;
+              }
+
+              &.selected {
+                background: #e0f2fe;
+                color: #0369a1;
+                font-weight: 600;
+              }
+
+              input[type="radio"] {
+                accent-color: #0ea5e9;
+                width: 16px;
+                height: 16px;
+                cursor: pointer;
+              }
+            }
+          }
+        }
+      }
     }
 
     .actions {
@@ -989,6 +1129,23 @@
         }
       }
       
+      &.layout-speaker-view {
+        flex-direction: column;
+
+        .main-speaker-container {
+          flex: 2;
+        }
+
+        .small-participants-strip {
+          max-height: 100px;
+          flex: none;
+
+          .video-card {
+            flex: 0 0 130px;
+          }
+        }
+      }
+
       .participants-grid {
         gap: 8px;
       }

@@ -10,6 +10,10 @@ import {
   FaDownload,
   FaFileAlt,
   FaCircle,
+  FaTh,
+  FaUser,
+  FaCog,
+  FaVolumeUp,
 } from "react-icons/fa";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
@@ -27,6 +31,12 @@ const MeetingRoom: React.FC = () => {
 
   const [videoOn, setVideoOn] = useState(false);
   const [micOn, setMicOn] = useState(true);
+  const [layoutMode, setLayoutMode] = useState<"grid" | "speaker">("speaker");
+  const [showDeviceMenu, setShowDeviceMenu] = useState(false);
+  const [audioInputDevices, setAudioInputDevices] = useState<MediaDeviceInfo[]>([]);
+  const [audioOutputDevices, setAudioOutputDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedAudioInput, setSelectedAudioInput] = useState<string>("");
+  const [selectedAudioOutput, setSelectedAudioOutput] = useState<string>("");
   const [screenSharing, setScreenSharing] = useState(false);
   const [captions, setCaptions] = useState<string>("");
   const [captionsOn, setCaptionsOn] = useState<boolean>(true);
@@ -670,29 +680,149 @@ const MeetingRoom: React.FC = () => {
   // --- Video/Mic/Screen controls ---
   const toggleVideo = async () => {
     if (videoOn) {
+      // Disable video track
       if (streamRef.current) {
         streamRef.current.getVideoTracks().forEach((track) => (track.enabled = false));
       }
       setVideoOn(false);
       broadcastState("TOGGLE_CAMERA", { videoOn: false });
     } else {
+      // Re-enable: first try enabling existing tracks
       if (streamRef.current) {
-        streamRef.current.getVideoTracks().forEach((track) => (track.enabled = true));
+        const existingTracks = streamRef.current.getVideoTracks();
+        if (existingTracks.length > 0) {
+          existingTracks.forEach((track) => (track.enabled = true));
+          setVideoOn(true);
+          broadcastState("TOGGLE_CAMERA", { videoOn: true });
+        } else {
+          // No video tracks exist, re-acquire camera
+          try {
+            const newStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            const newVideoTrack = newStream.getVideoTracks()[0];
+            streamRef.current.addTrack(newVideoTrack);
+
+            // Replace track in all peer connections
+            peersRef.current.forEach((pc) => {
+              const senders = pc.getSenders();
+              const videoSender = senders.find((s) => s.track?.kind === "video");
+              if (videoSender) {
+                videoSender.replaceTrack(newVideoTrack);
+              } else {
+                pc.addTrack(newVideoTrack, streamRef.current!);
+              }
+            });
+
+            setLocalStream(streamRef.current);
+            setVideoOn(true);
+            broadcastState("TOGGLE_CAMERA", { videoOn: true });
+          } catch (err) {
+            console.error("Failed to re-acquire camera:", err);
+          }
+        }
       }
-      setVideoOn(true);
-      broadcastState("TOGGLE_CAMERA", { videoOn: true });
     }
   };
 
-  const toggleMic = () => {
+  const toggleMic = async () => {
     const nextState = !micOn;
     if (streamRef.current) {
-      streamRef.current.getAudioTracks().forEach((track) => {
-        track.enabled = nextState;
-      });
+      const audioTracks = streamRef.current.getAudioTracks();
+      if (audioTracks.length > 0) {
+        audioTracks.forEach((track) => (track.enabled = nextState));
+      } else if (nextState) {
+        // No audio tracks — re-acquire mic
+        try {
+          const newStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+              ...(selectedAudioInput ? { deviceId: { exact: selectedAudioInput } } : {}),
+            },
+          });
+          const newAudioTrack = newStream.getAudioTracks()[0];
+          streamRef.current.addTrack(newAudioTrack);
+
+          peersRef.current.forEach((pc) => {
+            const senders = pc.getSenders();
+            const audioSender = senders.find((s) => s.track?.kind === "audio");
+            if (audioSender) {
+              audioSender.replaceTrack(newAudioTrack);
+            } else {
+              pc.addTrack(newAudioTrack, streamRef.current!);
+            }
+          });
+
+          setLocalStream(streamRef.current);
+        } catch (err) {
+          console.error("Failed to re-acquire microphone:", err);
+          return; // Don't flip state if reacquire failed
+        }
+      }
     }
     setMicOn(nextState);
     broadcastState("TOGGLE_MIC", { micOn: nextState });
+  };
+
+  // --- Device Enumeration & Selection ---
+  const loadDevices = async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      setAudioInputDevices(devices.filter((d) => d.kind === "audioinput"));
+      setAudioOutputDevices(devices.filter((d) => d.kind === "audiooutput"));
+    } catch (err) {
+      console.error("Failed to enumerate devices:", err);
+    }
+  };
+
+  const switchAudioInput = async (deviceId: string) => {
+    setSelectedAudioInput(deviceId);
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          deviceId: { exact: deviceId },
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+      const newAudioTrack = newStream.getAudioTracks()[0];
+
+      if (streamRef.current) {
+        // Remove old audio tracks
+        streamRef.current.getAudioTracks().forEach((track) => {
+          streamRef.current!.removeTrack(track);
+          track.stop();
+        });
+        streamRef.current.addTrack(newAudioTrack);
+
+        // Replace in all peers
+        peersRef.current.forEach((pc) => {
+          const senders = pc.getSenders();
+          const audioSender = senders.find((s) => s.track?.kind === "audio");
+          if (audioSender) {
+            audioSender.replaceTrack(newAudioTrack);
+          }
+        });
+
+        setLocalStream(streamRef.current);
+      }
+    } catch (err) {
+      console.error("Failed to switch audio input:", err);
+    }
+  };
+
+  const switchAudioOutput = async (deviceId: string) => {
+    setSelectedAudioOutput(deviceId);
+    // Set audio output on all remote video elements
+    const videoElements = document.querySelectorAll<HTMLVideoElement>(".video-card.remote video");
+    videoElements.forEach((el) => {
+      if (typeof (el as any).setSinkId === "function") {
+        (el as any).setSinkId(deviceId).catch((err: any) => {
+          console.error("Failed to set audio output device:", err);
+        });
+      }
+    });
   };
 
   const indexMeeting = async () => {
@@ -1140,6 +1270,7 @@ const MeetingRoom: React.FC = () => {
                 ? "You"
                 : remoteParticipants.find((p) => p.screenSharing)?.userName || null
             }
+            layoutMode={layoutMode}
           />
           {captionsOn && captions && <div className="live-captions">{captions}</div>}
           {recordingStatus && <div className="recording-status-toast">{recordingStatus}</div>}
@@ -1351,19 +1482,51 @@ const MeetingRoom: React.FC = () => {
 
       <footer className="control-bar">
         <div className="controls">
-          <button className={`btn-circle ${videoOn ? "active" : ""}`} onClick={toggleVideo}>
+          <button className={`btn-circle ${videoOn ? "active" : ""}`} onClick={toggleVideo} title={videoOn ? "Turn Off Camera" : "Turn On Camera"}>
             {videoOn ? <FaVideo /> : <FaVideoSlash />}
           </button>
-          <button className={`btn-circle ${micOn ? "active" : ""}`} onClick={toggleMic}>
+          <button className={`btn-circle ${micOn ? "active" : ""}`} onClick={toggleMic} title={micOn ? "Mute Microphone" : "Unmute Microphone"}>
             {micOn ? <FaMicrophone /> : <FaMicrophoneSlash />}
           </button>
-          <button className={`btn-circle ${captionsOn ? "active" : ""}`} onClick={toggleCaptions}>
+          <div className="device-menu-wrapper">
+            <button className={`btn-circle ${showDeviceMenu ? "active" : ""}`} onClick={() => { setShowDeviceMenu(!showDeviceMenu); if (!showDeviceMenu) loadDevices(); }} title="Audio Settings">
+              <FaCog />
+            </button>
+            {showDeviceMenu && (
+              <div className="device-menu-popup">
+                <div className="device-section">
+                  <h4><FaMicrophone /> Microphone</h4>
+                  {audioInputDevices.length === 0 && <p className="no-devices">No microphones found</p>}
+                  {audioInputDevices.map((d) => (
+                    <label key={d.deviceId} className={`device-option ${selectedAudioInput === d.deviceId ? "selected" : ""}`}>
+                      <input type="radio" name="audioInput" value={d.deviceId} checked={selectedAudioInput === d.deviceId} onChange={() => switchAudioInput(d.deviceId)} />
+                      {d.label || `Microphone ${d.deviceId.slice(0, 8)}`}
+                    </label>
+                  ))}
+                </div>
+                <div className="device-section">
+                  <h4><FaVolumeUp /> Speaker</h4>
+                  {audioOutputDevices.length === 0 && <p className="no-devices">No speakers found</p>}
+                  {audioOutputDevices.map((d) => (
+                    <label key={d.deviceId} className={`device-option ${selectedAudioOutput === d.deviceId ? "selected" : ""}`}>
+                      <input type="radio" name="audioOutput" value={d.deviceId} checked={selectedAudioOutput === d.deviceId} onChange={() => switchAudioOutput(d.deviceId)} />
+                      {d.label || `Speaker ${d.deviceId.slice(0, 8)}`}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <button className={`btn-circle ${captionsOn ? "active" : ""}`} onClick={toggleCaptions} title="Toggle Captions">
             CC
           </button>
-          <button className={`btn-circle ${screenSharing ? "active" : ""}`} onClick={shareScreen}>
+          <button className={`btn-circle ${screenSharing ? "active" : ""}`} onClick={shareScreen} title="Share Screen">
             <FaDesktop />
           </button>
-           <button className={`btn-circle recording-btn ${recording ? "active" : ""}`} onClick={toggleRecording}>
+          <button className={`btn-circle ${layoutMode === "speaker" ? "active" : ""}`} onClick={() => setLayoutMode(layoutMode === "grid" ? "speaker" : "grid")} title={layoutMode === "grid" ? "Switch to Speaker View" : "Switch to Grid View"}>
+            {layoutMode === "grid" ? <FaUser /> : <FaTh />}
+          </button>
+          <button className={`btn-circle recording-btn ${recording ? "active" : ""}`} onClick={toggleRecording} title={recording ? "Stop Recording" : "Start Recording"}>
             <FaCircle />
           </button>
           {isHost ? (
@@ -1385,7 +1548,7 @@ const MeetingRoom: React.FC = () => {
               LM
             </button>
           )}
-          <button className="btn-circle danger" onClick={hangUp}>
+          <button className="btn-circle danger" onClick={hangUp} title="Leave Meeting">
             <FaPhone />
           </button>
         </div>

@@ -22,19 +22,20 @@ const LocalVideo: React.FC<LocalVideoProps> = ({
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
     }
-  }, [stream, videoOn]);
+  }, [stream]);
 
   return (
     <div className={`video-card local ${isActiveSpeaker ? "active-speaker" : ""}`}>
-      {videoOn && stream ? (
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="video-element mirrored"
-        />
-      ) : (
+      {/* Always keep video mounted so stream stays attached */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        className="video-element mirrored"
+        style={{ display: videoOn && stream ? "block" : "none" }}
+      />
+      {(!videoOn || !stream) && (
         <div className="avatar-placeholder">
           <div className="avatar-circle">
             {userName.charAt(0).toUpperCase()}
